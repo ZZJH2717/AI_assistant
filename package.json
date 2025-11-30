@@ -1,0 +1,31 @@
+{
+  "name": "ai-assistant",
+  "version": "1.0.0",
+  "description": "一个AI助手微型工具",
+  "main": "src/AI_assistant/AI_ass_1.js",
+  "scripts": {
+    "start": "node src/AI_assistant/AI_ass_1.js",
+    "dev": "nodemon src/AI_assistant/AI_ass_1.js"
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "chatbot",
+    "openai",
+    "claude",
+    "gemini",
+    "zhipuai"
+  ],
+  "author": "AI Assistant Developer",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "@google/generative-ai": "^0.1.0",
+    "@zhipuai/sdk": "^1.0.0",
+    "express": "^4.18.0",
+    "openai": "^3.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.0"
+  }
+}

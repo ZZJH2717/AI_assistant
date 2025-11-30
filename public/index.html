@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助手微型工具</title>
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --user-message-bg: #e6f7ff;
+            --ai-message-bg: #f5f5f5;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 85%;
+            padding: 12px 15px;
+            border-radius: 18px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--user-message-bg);
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: var(--ai-message-bg);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-header {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        #user-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #3a5bd9;
+        }
+
+        button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .secondary-btn {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .secondary-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background-color: var(--ai-message-bg);
+            padding: 12px 15px;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dots span {
+            height: 8px;
+            width: 8px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 设置模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success-message {
+            color: #27ae60;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+                height: calc(100vh - 20px);
+            }
+
+            .message {
+                max-width: 90%;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div>
+            <h1>AI助手微型工具</h1>
+            <p class="subtitle">轻量级AI对话助手，为您提供智能帮助</p>
+        </div>
+        <button id="settings-btn" class="secondary-btn">设置</button>
+    </header>
+
+    <div class="chat-container" id="chat-container">
+        <div class="message ai-message">
+            <div class="message-header">AI助手</div>
+            您好！我是您的AI助手，请先在设置中配置AI模型密钥，然后开始对话。
+        </div>
+    </div>
+
+    <div class="typing-indicator" id="typing-indicator">
+        <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="请输入您的问题..." autocomplete="off">
+        <button id="send-btn">发送</button>
+    </div>
+
+    <div class="controls">
+        <button id="clear-btn" class="secondary-btn">清除对话</button>
+        <button id="export-btn" class="secondary-btn">导出对话</button>
+    </div>
+</div>
+
+<!-- 设置模态框 -->
+<div class="modal" id="settings-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">AI助手设置</h2>
+            <button class="close-btn" id="close-modal">&times;</button>
+        </div>
+
+        <form id="settings-form">
+            <div class="form-group">
+                <label for="ai-provider">AI服务提供商</label>
+                <select id="ai-provider">
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="google">Google (Gemini)</option>
+                    <option value="zhipu">智普AI (GLM)</option>
+                    <option value="custom">自定义API</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="api-key">API密钥</label>
+                <input type="password" id="api-key" placeholder="请输入您的API密钥">
+                <div class="form-hint">您的API密钥仅存储在本地，不会发送到任何其他服务器。</div>
+            </div>
+
+            <div class="form-group">
+                <label for="api-url">API端点 (可选)</label>
+                <input type="text" id="api-url" placeholder="https://api.openai.com/v1/chat/completions">
+                <div class="form-hint">仅在使用自定义API时需要填写</div>
+            </div>
+
+            <div class="form-group">
+                <label for="model">模型</label>
+                <select id="model">
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                </select>
+            </div>
+
+            <div class="error-message" id="settings-error"></div>
+            <div class="success-message" id="settings-success"></div>
+
+            <div class="modal-footer">
+                <button type="button" class="secondary-btn" id="test-connection">测试连接</button>
+                <button type="submit" class="primary-btn">保存设置</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 获取DOM元素
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeModal = document.getElementById('close-modal');
+    const settingsForm = document.getElementById('settings-form');
+    const testConnectionBtn = document.getElementById('test-connection');
+    const settingsError = document.getElementById('settings-error');
+    const settingsSuccess = document.getElementById('settings-success');
+
+    // 对话历史
+    let conversationHistory = [
+        { role: 'ai', content: '您好！我是您的AI助手，请先在设置中配置AI模型密钥，然后开始对话。' }
+    ];
+
+    // 加载保存的设置
+    let aiSettings = loadSettings();
+
+    // 发送消息函数
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        // 添加用户消息到对话历史
+        addMessage('user', message);
+        userInput.value = '';
+
+        // 禁用发送按钮和输入框
+        sendBtn.disabled = true;
+        userInput.disabled = true;
+
+        // 显示正在输入指示器
+        typingIndicator.style.display = 'block';
+        scrollToBottom();
+
+        try {
+            // 调用后端API获取AI响应
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // 隐藏正在输入指示器
+            typingIndicator.style.display = 'none';
+
+            if (data.success) {
+                // 添加AI消息到对话历史
+                addMessage('ai', data.response);
+            } else {
+                throw new Error(data.error || '未知错误');
+            }
+        } catch (error) {
+            // 隐藏正在输入指示器
+            typingIndicator.style.display = 'none';
+
+            // 显示错误消息
+            addMessage('ai', `抱歉，发生了错误：${error.message}`);
+            console.error('API请求失败:', error);
+        } finally {
+            // 重新启用发送按钮和输入框
+            sendBtn.disabled = false;
+            userInput.disabled = false;
+            userInput.focus(); // 聚焦到输入框
+
+            // 滚动到底部
+            scrollToBottom();
+        }
+    }
+
+    // 添加消息到聊天界面
+    function addMessage(role, content) {
+        // 添加到历史记录
+        conversationHistory.push({ role, content });
+
+        // 创建消息元素
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.classList.add(role === 'user' ? 'user-message' : 'ai-message');
+
+        // 添加消息头
+        const messageHeader = document.createElement('div');
+        messageHeader.classList.add('message-header');
+        messageHeader.textContent = role === 'user' ? '您' : 'AI助手';
+
+        // 添加消息内容
+        const messageContent = document.createElement('div');
+        // 处理换行符
+        messageContent.innerHTML = content.replace(/\n/g, '<br>');
+
+        // 组装消息
+        messageElement.appendChild(messageHeader);
+        messageElement.appendChild(messageContent);
+
+        // 添加到聊天容器
+        chatContainer.appendChild(messageElement);
+    }
+
+    // 滚动到聊天底部
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // 清除对话
+    function clearConversation() {
+        if (confirm('确定要清除所有对话吗？')) {
+            chatContainer.innerHTML = '';
+            conversationHistory = [
+                { role: 'ai', content: '您好！我是您的AI助手，有什么我可以帮助您的吗？' }
+            ];
+            addMessage('ai', '您好！我是您的AI助手，有什么我可以帮助您的吗？');
+        }
+    }
+
+    // 导出对话
+    function exportConversation() {
+        let exportText = 'AI助手对话记录\n\n';
+
+        conversationHistory.forEach(msg => {
+            const prefix = msg.role === 'user' ? '您: ' : 'AI助手: ';
+            exportText += prefix + msg.content + '\n\n';
+        });
+
+        const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'AI助手对话记录.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 打开设置模态框
+    function openSettings() {
+        // 填充当前设置
+        document.getElementById('ai-provider').value = aiSettings.provider || 'openai';
+        document.getElementById('api-key').value = aiSettings.apiKey || '';
+        document.getElementById('api-url').value = aiSettings.apiUrl || '';
+        updateModelOptions(); // 根据提供商更新模型选项
+        document.getElementById('model').value = aiSettings.model || 'gpt-3.5-turbo';
+
+        // 显示模态框
+        settingsModal.style.display = 'flex';
+    }
+
+    // 根据AI提供商更新模型选项
+    function updateModelOptions() {
+        const provider = document.getElementById('ai-provider').value;
+        const modelSelect = document.getElementById('model');
+        
+        // 清空现有选项
+        modelSelect.innerHTML = '';
+        
+        // 根据提供商添加相应选项
+        switch(provider) {
+            case 'openai':
+                modelSelect.innerHTML = `
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                `;
+                break;
+            case 'anthropic':
+                modelSelect.innerHTML = `
+                    <option value="claude-2.1">Claude 2.1</option>
+                    <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                    <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                `;
+                break;
+            case 'google':
+                modelSelect.innerHTML = `
+                    <option value="gemini-pro">Gemini Pro</option>
+                    <option value="gemini-pro-vision">Gemini Pro Vision</option>
+                `;
+                break;
+            case 'zhipu':
+                modelSelect.innerHTML = `
+                    <option value="glm-4-flash">GLM-4 Flash</option>
+                    <option value="glm-4">GLM-4</option>
+                    <option value="glm-4-air">GLM-4 Air</option>
+                    <option value="glm-4-airx">GLM-4 AirX</option>
+                `;
+                break;
+            case 'custom':
+                modelSelect.innerHTML = `
+                    <option value="custom-model">自定义模型</option>
+                `;
+                break;
+            default:
+                modelSelect.innerHTML = `
+                    <option value="default-model">默认模型</option>
+                `;
+        }
+    }
+
+    // 关闭设置模态框
+    function closeSettings() {
+        settingsModal.style.display = 'none';
+        hideMessages();
+    }
+
+    // 隐藏消息
+    function hideMessages() {
+        settingsError.style.display = 'none';
+        settingsSuccess.style.display = 'none';
+    }
+
+    // 显示错误消息
+    function showError(message) {
+        settingsError.textContent = message;
+        settingsError.style.display = 'block';
+        settingsSuccess.style.display = 'none';
+    }
+
+    // 显示成功消息
+    function showSuccess(message) {
+        settingsSuccess.textContent = message;
+        settingsSuccess.style.display = 'block';
+        settingsError.style.display = 'none';
+    }
+
+    // 保存设置
+    function saveSettings() {
+        const provider = document.getElementById('ai-provider').value;
+        const apiKey = document.getElementById('api-key').value.trim();
+        const apiUrl = document.getElementById('api-url').value.trim();
+        const model = document.getElementById('model').value;
+
+        if (!apiKey) {
+            showError('API密钥不能为空');
+            return false;
+        }
+
+        // 根据选择的提供商验证API URL
+        if (provider === 'custom' && !apiUrl) {
+            showError('自定义API必须提供API端点');
+            return false;
+        }
+
+        aiSettings = {
+            provider,
+            apiKey,
+            apiUrl,
+            model
+        };
+
+        localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
+        showSuccess('设置已保存');
+        return true;
+    }
+
+    // 加载设置
+    function loadSettings() {
+        const saved = localStorage.getItem('aiSettings');
+        return saved ? JSON.parse(saved) : {
+            provider: 'openai',
+            apiKey: '',
+            apiUrl: '',
+            model: 'gpt-3.5-turbo'
+        };
+    }
+
+    // 测试连接
+    async function testConnection() {
+        if (!saveSettings()) return;
+
+        testConnectionBtn.disabled = true;
+        testConnectionBtn.textContent = '测试中...';
+
+        try {
+            const response = await fetch('/api/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    settings: aiSettings
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess('连接测试成功！');
+            } else {
+                showError(`连接测试失败: ${data.error}`);
+            }
+        } catch (error) {
+            showError(`连接测试失败: ${error.message}`);
+        } finally {
+            testConnectionBtn.disabled = false;
+            testConnectionBtn.textContent = '测试连接';
+        }
+    }
+
+    // 事件监听
+    sendBtn.addEventListener('click', sendMessage);
+
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // 添加AI提供商选择变更事件监听器
+    document.getElementById('ai-provider').addEventListener('change', updateModelOptions);
+
+    clearBtn.addEventListener('click', clearConversation);
+    exportBtn.addEventListener('click', exportConversation);
+    settingsBtn.addEventListener('click', openSettings);
+    closeModal.addEventListener('click', closeSettings);
+
+    settingsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (saveSettings()) {
+            setTimeout(closeSettings, 1000);
+        }
+    });
+
+    testConnectionBtn.addEventListener('click', testConnection);
+
+    // 点击模态框外部关闭
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            closeSettings();
+        }
+    });
+
+    // 初始滚动到底部
+    scrollToBottom();
+</script>
+</body>
+</html>
