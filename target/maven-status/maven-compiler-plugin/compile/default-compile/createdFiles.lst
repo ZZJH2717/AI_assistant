@@ -1,0 +1,9 @@
+com\ai\assistant\service\AIProviderServiceImpl.class
+com\ai\assistant\model\ChatRequest.class
+com\ai\assistant\config\WebConfig.class
+com\ai\assistant\service\AIProviderService.class
+com\ai\assistant\model\AISettings.class
+com\ai\assistant\model\Message.class
+com\ai\assistant\Application.class
+com\ai\assistant\controller\ChatController.class
+com\ai\assistant\model\TestRequest.class
