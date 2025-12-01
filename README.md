@@ -47,8 +47,6 @@
    npm run dev
    ```
 
-3. 访问应用：
-   打开浏览器访问 `http://localhost:3000`
 
 ## 配置说明
 
